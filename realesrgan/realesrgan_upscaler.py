@@ -11,7 +11,7 @@ import gc
 import pathlib
 
 # Set some strings.
-__version__ = "0.0.0.6"
+__version__ = "0.0.0.7"
 
 # Import the third party Python modules.
 from PIL import Image
