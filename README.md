@@ -3,14 +3,20 @@
 # Preface
 
 <p align="justify">This node uses the RealESRGAN model from
-xinntao. This is my personal favourite upscaling model and 
+xinntao [1]. This is my personal favourite upscaling model and 
 upscaling approach.</p>
 
-# Node Preview
+## Upscaling
+
+On can set the scaling factor is steps of 0.1. There is for the
+moment no limit for the factor. I scaled a testimage up with a
+factor of 30.0.
+
+## Node Preview
 
 ![Bildschirmfoto vom 2025-02-08 16-32-33](https://github.com/user-attachments/assets/eefc86af-87fb-4fe0-bf41-df37dc93eb5a)
 
-# Workflow Preview
+## Workflow Preview
 
 ![image](https://github.com/user-attachments/assets/8ac47db6-6293-44d3-98e0-aae302bab020)
 
