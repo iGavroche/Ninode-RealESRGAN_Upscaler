@@ -9,8 +9,8 @@ upscaling approach.</p>
 ## Upscaling
 
 On can set the scaling factor is steps of 0.1. There is for the
-moment no limit for the factor. I scaled a testimage up with a
-factor of 30.0.
+moment no limit for the scaling factor. I scaled a testimage up
+with a factor of 30.0.
 
 ## Node Preview
 
