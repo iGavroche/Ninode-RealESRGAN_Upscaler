@@ -61,7 +61,7 @@ MODELS_PATH = ''.join([str(PARENT_PATH), "/models"])
 MODEL = "RealESRGAN_x4plus.pth"
 
 # Set the model path.
-MODEL_PATH = ''.join([str(MODELS_PATH), "/RealESRGAN_x4plus.pth"])
+MODEL_PATH = '/'.join([str(MODELS_PATH), MODEL])
 
 # Set file path.
 FILE_URL = 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth'
