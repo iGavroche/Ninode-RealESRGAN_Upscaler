@@ -161,7 +161,7 @@ class RealEsrganUpscaler:
     RETURN_TYPES = ("IMAGE", "STRING",)
     RETURN_NAMES = ("IMAGE", "DATA",)
     FUNCTION = "realesrgan_upscaler"
-    CATEGORY = "🥽 RealEsrganUpscaler"
+    CATEGORY = "🧮 RealEsrganUpscaler"
     DESCRIPTION = "Upscaling using RealESRGAN."
     OUTPUT_NODE = True
 
