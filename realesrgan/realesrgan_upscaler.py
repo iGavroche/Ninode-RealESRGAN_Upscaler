@@ -151,7 +151,7 @@ class RealEsrganUpscaler:
                 "image": ("IMAGE",),
                 "scale_factor": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1024.0, "step": 0.1}),
                 "gpu_id": (GPU_LIST, {}),
-                "tile_number": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 1}),
+                "tile_number": ("INT", {"default": 0, "min": 0, "max": 8192, "step": 64}),
                 "fp_format": (["fp16", "fp32"], {}),
                 "model": ("STRING", {"multiline": False, "default": MODEL}),
             }
