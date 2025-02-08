@@ -1,16 +1,9 @@
 #!/usr/bin/python
 '''RealESRGAN Upscaler node.'''
-##pylint:#disable=too-many-locals
-##pylint:#disable=bare-except
-##pylint:#disable=no-member
-##pylint:#disable=line-too-long
 # pylint: disable=invalid-name
 # pylint: disable=too-many-positional-arguments
 # pylint: disable=too-many-arguments
 # pylint: disable=unused-variable
-##pylint:#disable=too-many-nested-blocks
-##pylint:#disable=undefined-variable
-##pylint:#disable=unused-argument
 
 # Import the Python modules.
 import warnings
@@ -27,6 +20,9 @@ from realesrgan import RealESRGANer
 
 # Disable future warning.
 warnings.filterwarnings("ignore", category=FutureWarning)
+
+# Set some strings.
+__version__ = "0.0.0.2"
 
 # Create context manager.
 class ClearCache:
