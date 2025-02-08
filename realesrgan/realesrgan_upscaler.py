@@ -11,7 +11,7 @@ import gc
 import pathlib
 
 # Set some strings.
-__version__ = "0.0.0.5"
+__version__ = "0.0.0.6"
 
 # Import the third party Python modules.
 from PIL import Image
@@ -45,7 +45,7 @@ for i in range(NUM_GPUS):
     VRAM = str(int(VRAM / 1000**3)) + " GB"
     info = torch.cuda.get_device_name(i)
     print(i, info)
-    GPU_STR = GPU_STR + str(i) + "\t" + info + "\t" + VRAM + "\n"
+    GPU_STR = GPU_STR + str(i) + " " + info + " " + VRAM + "\n"
 GPU_STR = GPU_STR.lstrip().rstrip()
 
 # Create list with the GPUs numbers.
@@ -161,7 +161,7 @@ class RealEsrganUpscaler:
     RETURN_TYPES = ("IMAGE", "STRING",)
     RETURN_NAMES = ("IMAGE", "DATA",)
     FUNCTION = "realesrgan_upscaler"
-    CATEGORY = "🔍 RealEsrganUpscaler"
+    CATEGORY = "🥽 RealEsrganUpscaler"
     DESCRIPTION = "Upscaling using RealESRGAN."
     OUTPUT_NODE = True
 
