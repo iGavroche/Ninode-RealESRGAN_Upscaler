@@ -158,8 +158,8 @@ class RealEsrganUpscaler:
         }
 
     # Set the ComfyUI related variables.
-    RETURN_TYPES = ("IMAGE",)
-    RETURN_NAMES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE", "STRING",)
+    RETURN_NAMES = ("IMAGE", "DATA",)
     FUNCTION = "realesrgan_upscaler"
     CATEGORY = "🔍 RealEsrganUpscaler"
     DESCRIPTION = "Upscaling using RealESRGAN."
@@ -178,4 +178,4 @@ class RealEsrganUpscaler:
         # Create tensors from PIL.
         image_out = pil2tensor(imgNEW)
         # Return the upscaled image.
-        return (image_out,)
+        return (image_out, GPU_STR)
