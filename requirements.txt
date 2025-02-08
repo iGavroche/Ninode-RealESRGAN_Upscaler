@@ -2,6 +2,8 @@ basicsr>=1.4.2
 numpy
 opencv-python
 Pillow
-torch>=1.7
-torchvision
 realesrgan
+# [ComfyUI-Manager] skip black listed pip installation: 'torch>=1.7'
+# [ComfyUI-Manager] skip black listed pip installation: 'torchvision'
+#torch>=1.7
+#torchvision
