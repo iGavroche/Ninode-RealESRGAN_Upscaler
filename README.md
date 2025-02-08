@@ -8,11 +8,11 @@ upscaling approach.</p>
 
 # Node Preview
 
-to-do ...
+![Bildschirmfoto vom 2025-02-08 16-32-33](https://github.com/user-attachments/assets/eefc86af-87fb-4fe0-bf41-df37dc93eb5a)
 
 # Workflow Preview
 
-to-do ...
+![image](https://github.com/user-attachments/assets/8ac47db6-6293-44d3-98e0-aae302bab020)
 
 ## Final Words
 
