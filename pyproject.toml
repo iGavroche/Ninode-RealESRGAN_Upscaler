@@ -1,11 +1,11 @@
 [project]
-name = "ComfyUI-RealEsrgan_Upscaler"
-description = "ComfyUI-RealEsrgan_Upscaler."
+name = "ComfyUI-RealESRGAN_Upscaler"
+description = "ComfyUI-RealESRGAN_Upscaler."
 version = "0.0.0.1"
 license = {file = "LICENSE"}
 
 [project.urls]
-Repository = "https://github.com/zentrocdot/ComfyUI_RealEsrgan_Upscaler"
+Repository = "https://github.com/zentrocdot/ComfyUI-RealESRGAN_Upscaler"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
