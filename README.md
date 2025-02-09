@@ -118,11 +118,18 @@ Figure 4 shows the example workflow preview.
 
 ## Tiling
 
+If the tiling is not set (for larger images), one will get following error:
+
+![Bildschirmfoto vom 2025-02-09 19-26-10](https://github.com/user-attachments/assets/bebd9bc8-39a9-4a90-b2c8-6dd055a1f1e5)
+
+
+<p><i>Figure 4a: Tiling problem preview</i></p>
+
 If the tiling is wrong set, one will get following error:
 
 ![Bildschirmfoto vom 2025-02-09 19-19-43](https://github.com/user-attachments/assets/b2684003-d7ad-490b-8367-9bf433c22ce5)
 
-<p><i>Figure 4a: Tiling problem preview</i></p>
+<p><i>Figure 4b: Tiling problem preview</i></p>
 
 ## Installation
 
