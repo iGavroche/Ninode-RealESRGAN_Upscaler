@@ -39,6 +39,19 @@ Figure 1 shows the node preview.
 <img src="./images/node_preview.png" alt="node preview" width="512">
 <p><i>Figure 1: Main node preview</i></p>
 
+## Node Parameter
+The node has following parameter
+
++ scale_factor (FLOAT)
++ tile_number (INT)
++ tile_pad (INT)
++ pre_pad (INT)
++ fp_format (STRING)
++ denoise (FLOAT)
++ netscale (INT)
++ gpu_id (LIST)
++ model (LIST)
+
 ## What the Node Does
 
 to-do ...
