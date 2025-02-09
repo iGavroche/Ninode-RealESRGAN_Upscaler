@@ -32,6 +32,25 @@ Now the node is a little bit more complicated than before. On the
 other hand side the node considers now everything which is possible
 to do with the node.</p>
 
+## Models
+
+<p align="justify">One needs a model for the upscaling. While installing 
+the nodes some models from xinntao are downloaded and placed in the 
+directory models so that one can start working with the upscaling.</p>
+
+Followiing models are compatible with the node:
+
+* RealESRGAN_x4plus.pth
+* RealESRNet_x4plus.pth
+* RealESRGAN_x2plus.pth
+* ESRGAN_SRx4_DF2KOST_official-ff704c30.pth
+
+## Netscale
+
+<p align="justify">One important setting depends on the model like the ones in the last
+section. The x2 and the x4 denotes the scale factor. This scale factor 
+must fit the value of netscale. Otherwise one will get an error message.</p> 
+
 ## Upscaling
 
 <p align="justify">One can set the scaling factor in steps of 0.1
