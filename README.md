@@ -18,6 +18,9 @@ with a factor of 30.0.
 
 ## Node Preview
 
+<img src="./images/ComfyUI_0002.jpeg" alt="button panel" width="512">
+<p><i>Figure 8: Main node preview</i></p>
+
 ![Bildschirmfoto vom 2025-02-08 16-32-33](https://github.com/user-attachments/assets/eefc86af-87fb-4fe0-bf41-df37dc93eb5a)
 
 ## Workflow Preview
