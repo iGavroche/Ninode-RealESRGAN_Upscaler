@@ -57,6 +57,8 @@ to-do ...
 
 ## Error Screen
 
+### Preliminary Note
+
 If you see an error screen which looks like the one below this is still intended as a possibility at present.
 
 ![Bildschirmfoto vom 2025-02-09 08-57-01](https://github.com/user-attachments/assets/03771469-3a59-4115-baba-a362b60d20fb)
@@ -70,6 +72,13 @@ netscale to the one the models needs. In the most of the models there will
 be a x2, x4 or x8 and then it is easy to use the right netscale. If there
 is no note in the filename to the netscale one needs to guess about the 
 right one.</p> 
+
+### General Remark
+
+While presenting how the node works I figured out a new problem. I was able
+to mess up my system so badly by setting an incorrect value for netscale that
+nothing worked at all. Conclusion is, that I have to catch the error, even though
+I didn't really want to.
 
 ## Limitations
 
