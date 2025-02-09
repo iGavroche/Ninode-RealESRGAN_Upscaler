@@ -121,7 +121,7 @@ netscale one got an error.
 
 ![Bildschirmfoto vom 2025-02-09 08-57-01](https://github.com/user-attachments/assets/03771469-3a59-4115-baba-a362b60d20fb)
 
-<p><i>Figure 2: Error message preview</i></p>
+<p><i>Figure 4: Error message preview</i></p>
 
 <p align="justify">The error led to unexpected behaviour of the node.
 This was the reason to rethink the programming. Now I catch the error
@@ -138,13 +138,13 @@ to-do ...
 
 ## Example Using Converted Models
 
-![Bildschirmfoto vom 2025-02-09 15-56-44](https://github.com/user-attachments/assets/6d89033e-65df-479e-87fc-18dcad30c418)
+![ultrasharp](https://github.com/user-attachments/assets/60d7e2ff-53d4-48b8-96a8-5f42fcf01868)
 
+<p><i>Figure 5: Upscaling using 4x-UltraSharp.pth</i></p>
 
+![nomos](https://github.com/user-attachments/assets/1d0305f3-d8e9-4e75-98f0-3fbe593d18b6)
 
-![Bildschirmfoto vom 2025-02-09 15-57-03](https://github.com/user-attachments/assets/15f0a4e3-9df2-49b1-bcb8-e90597284240)
-
-
+<p><i>Figure 6: Upscaling using 4xNomos8kSC.pth</i></p>
 
 ## Credits
 
