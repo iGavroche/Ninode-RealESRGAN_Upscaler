@@ -47,7 +47,7 @@ to-do ...
 
 Figure 1 shows the example workflow preview.
 
-<img src="./images/workflow_preview.png" alt="node preview" width="512">
+<img src="./images/workflow_preview.png" alt="node preview" width="1024">
 <p><i>Figure 2: Workflow preview</i></p>
 
 ## Installation
