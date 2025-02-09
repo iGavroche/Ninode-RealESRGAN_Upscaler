@@ -38,7 +38,7 @@ to do with the node.</p>
 the nodes some models from xinntao are downloaded and placed in the 
 directory models so that one can start working with the upscaling.</p>
 
-Followiing models are compatible with the node:
+Following models are compatible with the node [2]:
 
 * RealESRGAN_x4plus.pth
 * RealESRNet_x4plus.pth
