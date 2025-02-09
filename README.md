@@ -1,6 +1,5 @@
 # ComfyUI-RealESRGAN_Upscaler [![ComfyUI - Homepage](https://img.shields.io/badge/ComfyUI-Homepage-aa00ee)](https://github.com/comfyanonymous/ComfyUI) [![ComfyUI - Manager](https://img.shields.io/badge/ComfyUI-Manager-2aeeef)](https://github.com/ltdrdata/ComfyUI-Manager)
 
-
 > [!IMPORTANT]  
 > <p align="justify">🚧 This documentation is still under 
 > construction. The development of the upscaler is a ongoing 
@@ -17,6 +16,13 @@
 <p align="justify">This node uses the RealESRGAN model from
 xinntao [1]. This is my personal favourite upscaling model and 
 upscaling approach.</p>
+
+## Whats New
+
+<p align="justify">Yesterday I added a bunch of things to the node.
+Now the node is a little bit more complicated than before. On the 
+other hand side the node considers now everything which is possible
+to do with the node.</p>
 
 ## Upscaling
 
