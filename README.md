@@ -150,8 +150,9 @@ After that, the node will work.
 
 ## Bug Fixing
 
-in the directory is a file called fix.bash. This can be used to fix
-the bug in the Python package.
+In the directory scripts there is a file called <code>fix.bash</code>. This can 
+be used to fix the bug in the Python package. The only one prerequiste for this
+script is that ComfyUI is installed in a Python virtual envirnoment.
 
 ## Error Screen
 
