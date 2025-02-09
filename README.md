@@ -115,28 +115,18 @@ the bug in the Python package.
 
 ## Error Screen
 
-### Preliminary Note
-
-If you see an error screen which looks like the one below this is still intended as a possibility at present.
+While working on the node I have also provoked errors for testing purposes. 
+When the number of netscale is not matching the value of the model's
+netscale one got an error. 
 
 ![Bildschirmfoto vom 2025-02-09 08-57-01](https://github.com/user-attachments/assets/03771469-3a59-4115-baba-a362b60d20fb)
 
 <p><i>Figure 2: Error message preview</i></p>
 
-<p align="justify">The error is easy to explain. Since I opened the
-upscaler node for other models than the given ones there may be collisions 
-in the parameter settings. This error means that one is using a different
-netscale to the one the models needs. In the most of the models there will
-be a x2, x4 or x8 and then it is easy to use the right netscale. If there
-is no note in the filename to the netscale one needs to guess about the 
-right one.</p> 
-
-### General Remark
-
-<p align="justify">While presenting how the node works I figured out a new 
-problem. I was able to mess up my system so badly by setting an incorrect 
-value for netscale that nothing worked at all. Conclusion is, that I have 
-to catch the error, even though I didn't really want to.</p> 
+<p align="justify">The error led to unexpected behaviour of the node.
+This was the reason to rethink the programming. Now I catch the error
+Over the output ERROR one can make such an error visible. To prevent 
+misleading results the output is an empty image with text.</p> 
 
 ## Limitations
 
