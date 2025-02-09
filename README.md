@@ -31,11 +31,23 @@ the size of the image file.</p>
 <img src="./images/node_preview.png" alt="node preview" width="512">
 <p><i>Figure 1: Main node preview</i></p>
 
-![Bildschirmfoto vom 2025-02-08 16-32-33](https://github.com/user-attachments/assets/eefc86af-87fb-4fe0-bf41-df37dc93eb5a)
-
 ## Workflow Preview
 
 ![image](https://github.com/user-attachments/assets/8ac47db6-6293-44d3-98e0-aae302bab020)
+
+## Error Screen
+
+If you see an error screen which looks like the one below this is still intended as a possibility at present.
+
+![Bildschirmfoto vom 2025-02-09 08-57-01](https://github.com/user-attachments/assets/03771469-3a59-4115-baba-a362b60d20fb)
+
+<p align="justify">The error is easy to explain. Since I opened the
+upscaler node for other models than the given ones there may be collisions 
+in the parameter settings. This error means that one is using a different
+netscale to the one the models needs. In the most of the models there will
+be a x2, x4 or x8 and then it is easy to use the right netscale. If there
+is no note in the filename to the netscale one needs to guess about the 
+right one.</p> 
 
 ## Final Words
 
@@ -44,3 +56,7 @@ Have fun. Be inspired!
 # Reference
 
 [1] https://github.com/xinntao/Real-ESRGAN
+
+[2]
+
+[3]
