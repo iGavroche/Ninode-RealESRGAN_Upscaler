@@ -3,6 +3,7 @@ numpy
 opencv-python
 Pillow
 realesrgan
+requests
 # [ComfyUI-Manager] skip black listed pip installation: 'torch>=1.7'
 # [ComfyUI-Manager] skip black listed pip installation: 'torchvision'
 #torch>=1.7
