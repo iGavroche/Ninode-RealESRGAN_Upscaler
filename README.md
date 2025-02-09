@@ -55,6 +55,11 @@ The node has following parameter
 + gpu_id (LIST)
 + model (LIST)
 
+## Model Selection
+
+<img src="./images/model_selection.png" alt="model selection" width="1024">
+<p><i>Figure 2: Model selection</i></p>
+
 ## What the Node Does
 
 The node can upscale images which have following formats
@@ -65,15 +70,15 @@ The node can upscale images which have following formats
 
 ## Workflow Preview
 
-Figure 2 shows the example workflow preview.
-
-<img src="./images/workflow_preview.png" alt="node preview" width="1024">
-<p><i>Figure 2: Workflow preview</i></p>
-
 Figure 3 shows the example workflow preview.
 
-<img src="./images/workflow_error_preview.png" alt="node preview" width="1024">
+<img src="./images/workflow_preview.png" alt="node preview" width="1024">
 <p><i>Figure 3: Workflow preview</i></p>
+
+Figure 4 shows the example workflow preview.
+
+<img src="./images/workflow_error_preview.png" alt="node preview" width="1024">
+<p><i>Figure 4: Workflow preview</i></p>
 
 ## Installation
 
@@ -121,7 +126,7 @@ netscale one got an error.
 
 ![Bildschirmfoto vom 2025-02-09 08-57-01](https://github.com/user-attachments/assets/03771469-3a59-4115-baba-a362b60d20fb)
 
-<p><i>Figure 4: Error message preview</i></p>
+<p><i>Figure 5: Error message preview</i></p>
 
 <p align="justify">The error led to unexpected behaviour of the node.
 This was the reason to rethink the programming. Now I catch the error
@@ -138,17 +143,17 @@ to-do ...
 
 ## Example Using Converted Models
 
-<p align="justify">Figure 5 and Figure 6 show two examples where
+<p align="justify">Figure 6 and Figure 7 show two examples where
 I used two converted models for the upscaling. it depends on your
 personal taste which upscaler you like.</p> 
 
 ![ultrasharp](https://github.com/user-attachments/assets/60d7e2ff-53d4-48b8-96a8-5f42fcf01868)
 
-<p><i>Figure 5: Upscaling using 4x-UltraSharp.pth</i></p>
+<p><i>Figure 6: Upscaling using 4x-UltraSharp.pth</i></p>
 
 ![nomos](https://github.com/user-attachments/assets/1d0305f3-d8e9-4e75-98f0-3fbe593d18b6)
 
-<p><i>Figure 6: Upscaling using 4xNomos8kSC.pth</i></p>
+<p><i>Figure 7: Upscaling using 4xNomos8kSC.pth</i></p>
 
 ## Credits
 
