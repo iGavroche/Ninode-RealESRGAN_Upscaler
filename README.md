@@ -98,8 +98,11 @@ for a resolution of 1024 upwards.
 
 ## Tiling
 
+If the tiling is wrong set, one will get following error:
+
 ![Bildschirmfoto vom 2025-02-09 19-19-43](https://github.com/user-attachments/assets/b2684003-d7ad-490b-8367-9bf433c22ce5)
 
+<p><i>Figure 2a: Tiling problem preview</i></p>
 
 ## What the Node Does
 
