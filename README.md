@@ -57,11 +57,13 @@ Figure 3 shows the example workflow preview.
 
 ## Installation
 
-to-do ...
+<p align="justify">Use the ComfyUI Manager for the installation. Use my nick 'zentrocdot' or for 
+'ComfyUI_realESRGAN_Upscaler'</p>
 
 ## Bug Fixing
 
-to-do ...
+in the directory is a file called fix.bash. This can be used to fix
+the bug in the Python package.
 
 ## Error Screen
 
@@ -83,10 +85,10 @@ right one.</p>
 
 ### General Remark
 
-While presenting how the node works I figured out a new problem. I was able
-to mess up my system so badly by setting an incorrect value for netscale that
-nothing worked at all. Conclusion is, that I have to catch the error, even though
-I didn't really want to.
+<p align="justify">While presenting how the node works I figured out a new 
+problem. I was able to mess up my system so badly by setting an incorrect 
+value for netscale that nothing worked at all. Conclusion is, that I have 
+to catch the error, even though I didn't really want to.</p> 
 
 ## Limitations
 
@@ -114,3 +116,5 @@ Have fun. Be inspired!
 [3] https://arxiv.org/abs/2107.10833
 
 [3] https://github.com/zentrocdot/ESRGAN_RRBD_CONVERTER
+
+[4] https://github.com/ltdrdata/ComfyUI-Manager
