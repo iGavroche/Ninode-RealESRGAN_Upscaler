@@ -138,6 +138,10 @@ to-do ...
 
 ## Example Using Converted Models
 
+<p align="justify">Figure 5 and Figure 6 show two examples where
+I used two converted models for the upscaling. it depends on your
+personal taste which upscaler you like.</p> 
+
 ![ultrasharp](https://github.com/user-attachments/assets/60d7e2ff-53d4-48b8-96a8-5f42fcf01868)
 
 <p><i>Figure 5: Upscaling using 4x-UltraSharp.pth</i></p>
@@ -163,6 +167,8 @@ Have fun. Be inspired!
 
 [3] https://arxiv.org/abs/2107.10833
 
-[3] https://github.com/zentrocdot/ESRGAN_RRBD_CONVERTER
+[4] https://github.com/zentrocdot/ESRGAN_RRBD_CONVERTER
 
-[4] https://github.com/ltdrdata/ComfyUI-Manager
+[5] https://github.com/ltdrdata/ComfyUI-Manager
+
+[6] https://openmodeldb.info/
