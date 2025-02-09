@@ -55,6 +55,15 @@ The node has following parameter
 + gpu_id (LIST)
 + model (LIST)
 
+For an upscaling one needs in a first shot the scale factor and a model. 
+The other parameter can be as they are. For a resolution of the image of
+512 x 512 pixel this is in general valid. 
+
+Over the gpu_id the user can decide, which GPU should be used.
+
+Depending on the hardware one needs the tiling. In my case I needs tiling 
+for a resolution of 1024 upwards.
+
 ## Model Selection
 
 <img src="./images/model_selection.png" alt="model selection" width="512">
