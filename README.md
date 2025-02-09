@@ -4,12 +4,13 @@
 > [!IMPORTANT]  
 > <p align="justify">🚧 This documentation is still under 
 > construction. The development of the upscaler is a ongoing 
-> activity.</p>
+> activity. There might be small differenes in comparison of 
+> node and documentation.</p>
 
 > [!CAUTION]
-> <p align="justify">Please note, that the node will run, only if
-> an error in one Python package file is fixed. See the related 
-> section.</p> 
+> <p align="justify">Please note, that the node will run, only
+> if an error in one Python package file is fixed. See the 
+> related section for informations on this topic.</p> 
 
 # Preface
 
