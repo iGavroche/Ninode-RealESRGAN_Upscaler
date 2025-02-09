@@ -4,17 +4,25 @@
 # pylint: disable=too-many-positional-arguments
 # pylint: disable=too-many-arguments
 # pylint: disable=unused-variable
+# pylint: disable=bare-except
+# pylint: disable=too-many-locals
+# pylint: disable=line-too-long
+# pylint: disable=no-member
 
 # Import the Python modules.
-import warnings
+import os
 import gc
+import warnings
 import pathlib
 
-# Set some strings.
-__version__ = "0.0.0.8"
+# Set some module strings.
+__author__ = "zentrocdot"
+__copyright__ = "© Copyright 2025, zentrocdot"
+__version__ = "0.0.0.9"
 
 # Import the third party Python modules.
 from PIL import Image
+import cv2
 import numpy as np
 import torch
 import requests
@@ -38,8 +46,10 @@ class ClearCache:
 # Get the number of GPUs.
 NUM_GPUS = torch.cuda.device_count()
 
-# Get GPU string.
+# Initialse the GPU string.
 GPU_STR = ""
+
+# Create the GPU string.
 for i in range(NUM_GPUS):
     VRAM = torch.cuda.get_device_properties(i).total_memory
     VRAM = str(int(VRAM / 1000**3)) + " GB"
@@ -56,34 +66,31 @@ SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
 PARENT_PATH = SCRIPT_PATH.parent.absolute()
 MODELS_PATH = ''.join([str(PARENT_PATH), "/models"])
 
-# Set the models.
-#MODEL = "4x-UltraSharp.pth"
-MODEL = "RealESRGAN_x4plus.pth"
-
-# Set the model path.
-#MODEL_PATH = '/'.join([str(MODELS_PATH), "RealESRGAN_x4plus.pth"])
-
 # Set file path.
-MODELS = ['RealESRGAN_x4plus.pth', 'RealESRGAN_x2plus.pth', 'RealESRNet_x4plus.pth']
-FILE_URL = ['https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth',
-            'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
-            'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.1/RealESRNet_x4plus.pth']
+MOD_DIR = {'RealESRGAN_x4plus.pth': 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth',
+           'RealESRGAN_x2plus.pth': 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
+           'RealESRNet_x4plus.pth': 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.1/RealESRNet_x4plus.pth'}
 
 # Download models.
-count = 0
-for mod in MODELS:
-    model_path = '/'.join([str(MODELS_PATH), mod])
+for i, (k, v) in enumerate(MOD_DIR.items()):
+    model_path = '/'.join([str(MODELS_PATH), k])
     model_file = pathlib.Path(model_path)
+    print(model_path)
     print(model_file)
     if not model_file.is_file():
-        response = requests.get(FILE_URL[count], timeout=20)
+        response = requests.get(v, timeout=30)
         if response.status_code == 200:
             with open(model_path, 'wb') as file:
                 file.write(response.content)
             print('File download succeeded!')
         else:
             print('File download failed!')
-        count += 1
+
+# Read models.
+MODS = []
+for f in os.listdir(MODELS_PATH):
+    if f.endswith('.pth'):
+        MODS.append(f)
 
 # -------------------------------
 # Convert Tensor to PIL function.
@@ -107,44 +114,51 @@ def pil2tensor(image):
 def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_pad, pre_pad, models):
     """Inference upscaler using Real-ESRGAN.
     """
+    ERROR = None
     MODEL_PATH = '/'.join([str(MODELS_PATH), models])
     # Convert PIL image to Numpy array.
     image = np.array(input_img)
-    # Set up the network for the RealESRGAN model.
-    model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=netscale)
+    # Set up the network for the RealESRGAN model. Set scale to netscale.
     # Set the netscale (4) to the depending one of the model (x4).
-    #netscale = 4
+    scale = netscale
+    model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=scale)
     # Set dni_weight to control the denoise strength.
-    #dni_weight = None
-    dni_weight = [denoise, 1 - denoise]
-    # Set some padding values.
-    #pre_pad = 0
-    #tile_pad = 10
+    if denoise >= 0:
+        dni_weight = [denoise, 1 - denoise]
+    else:
+        dni_weight = None
     # Define the upscaler upsampler.
     with ClearCache():
-        upsampler = RealESRGANer(
-            scale=netscale,
-            model_path=MODEL_PATH,
-            dni_weight=dni_weight,
-            model=model,
-            tile=tile,
-            tile_pad=tile_pad,
+        try:
+            upsampler = RealESRGANer(
+                scale=netscale,
+                model_path=MODEL_PATH,
+                dni_weight=dni_weight,
+                model=model,
+                tile=tile,
+                tile_pad=tile_pad,
             pre_pad=pre_pad,
             half=not fp_fmt,
             gpu_id=gpu_id)
+        except:
+            ERROR = "💥 Oops, something went wrong!\n" + \
+                    "Check whether netscale fits the model!"
+            return None, ERROR
     # Determine the output image.
     try:
         outimg, _ = upsampler.enhance(image, outscale=outscale)
     except RuntimeError as error:
         torch.cuda.empty_cache()
-        #raise Error("An serious error occurred 💥. " +
-        #            "CUDA out of memory. Try to set tile size to a smaller number.")
+        outimg = None
+        ERROR = "An serious error occurred 💥. " + \
+                "CUDA out of memory. Try to set tile size to a smaller number."
     except UnboundLocalError as error:
         torch.cuda.empty_cache()
-        #raise Error("An serious error occurred 💥. " +
-        #            "Image size problem occurs. Tile size problem occurs.")
+        outimg = None
+        ERROR = "An serious error occurred 💥. " + \
+                "Image size problem occurs. Tile size problem occurs."
     # Return the upscaled image.
-    return outimg
+    return outimg, ERROR
 
 # ++++++++++++++++++++++++
 # Class RealEsrganUpscaler
@@ -163,22 +177,23 @@ class RealEsrganUpscaler:
                 "tile_pad": ("INT", {"default": 10, "min": 0, "max": 1024, "step": 1}),
                 "pre_pad": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 1}),
                 "fp_format": (["fp16", "fp32"], {}),
-                "denoise": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "denoise": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "netscale": ("INT", {"default": 4, "min": 1, "max": 64, "step": 1}),
                 "gpu_id": (GPU_LIST, {}),
-                "models": (MODELS, {}),
+                "models": (MODS, {}),
             }
         }
 
     # Set the ComfyUI related variables.
-    RETURN_TYPES = ("IMAGE", "STRING",)
-    RETURN_NAMES = ("IMAGE", "DATA",)
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING",)
+    RETURN_NAMES = ("IMAGE", "CONFIG", "ERROR",)
     FUNCTION = "realesrgan_upscaler"
-    CATEGORY = "🧮 RealEsrganUpscaler"
+    CATEGORY = "💊 RealEsrganUpscaler"
     DESCRIPTION = "Upscaling using RealESRGAN."
     OUTPUT_NODE = True
 
-    def realesrgan_upscaler(self, image, gpu_id, scale_factor, tile_number, fp_format, models, denoise, netscale, tile_pad, pre_pad):
+    def realesrgan_upscaler(self, image, gpu_id, scale_factor, tile_number,
+                            fp_format, models, denoise, netscale, tile_pad, pre_pad):
         '''Detect ellipse.'''
         # Set value for paranoia reason.
         gpu_id = int(gpu_id)
@@ -187,8 +202,23 @@ class RealEsrganUpscaler:
         # Copy image.
         imgNEW = img_input.copy()
         # Upscale image.
-        imgNEW = upscaler(imgNEW, scale_factor, gpu_id, tile_number, fp_format, denoise, netscale, tile_pad, pre_pad, models)
+        imgNEW, ERROR = upscaler(imgNEW, scale_factor, gpu_id, tile_number,
+                                 fp_format, denoise, netscale, tile_pad, pre_pad, models)
+        print(ERROR)
+        if ERROR is not None or imgNEW is None:
+            n,m = 512,512
+            errimg = np.zeros([n,m,3], dtype=np.uint8)
+            # Add text to the image
+            position = (20, 256)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 1
+            color = (255, 0, 255)
+            thickness = 2
+            text = "Oops, something went wrong!"
+            cv2.putText(errimg, text, position, font, font_scale, color, thickness)
+            errimg = Image.fromarray(np.uint8(errimg))
+            imgNEW = errimg
         # Create tensors from PIL.
         image_out = pil2tensor(imgNEW)
         # Return the upscaled image.
-        return (image_out, GPU_STR)
+        return (image_out, GPU_STR, ERROR,)
