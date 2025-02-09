@@ -110,7 +110,6 @@ to
 
 <code>from torchvision.transforms.functional import rgb_to_grayscale</code>
 
-
 After that, the node will work.
 
 ## Bug Fixing
@@ -135,7 +134,7 @@ misleading results the output is an empty image with text.</p>
 
 ## Limitations
 
-to-do ...
+Limitation at the moment not known.
 
 ## To-Do
 
