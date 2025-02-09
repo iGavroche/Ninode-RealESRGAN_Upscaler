@@ -18,7 +18,7 @@ import pathlib
 # Set some module strings.
 __author__ = "zentrocdot"
 __copyright__ = "© Copyright 2025, zentrocdot"
-__version__ = "0.0.0.9"
+__version__ = "0.0.1.0"
 
 # Import the third party Python modules.
 from PIL import Image
@@ -32,7 +32,7 @@ from realesrgan import RealESRGANer
 # Disable future warning.
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# Create context manager.
+# Create a context manager.
 class ClearCache:
     '''Clear cache class.'''
     def __enter__(self):
@@ -66,16 +66,16 @@ SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
 PARENT_PATH = SCRIPT_PATH.parent.absolute()
 MODELS_PATH = ''.join([str(PARENT_PATH), "/models"])
 
-# Set file path.
+# Set file paths.
 MOD_DIR = {'RealESRGAN_x4plus.pth': 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth',
            'RealESRGAN_x2plus.pth': 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
-           'RealESRNet_x4plus.pth': 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.1/RealESRNet_x4plus.pth'}
+           'RealESRNet_x4plus.pth': 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.1/RealESRNet_x4plus.pth',
+           'ESRGAN_SRx4_DF2KOST_official-ff704c30.pth': 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.1/ESRGAN_SRx4_DF2KOST_official-ff704c30.pth'}
 
 # Download models.
 for i, (k, v) in enumerate(MOD_DIR.items()):
     model_path = '/'.join([str(MODELS_PATH), k])
     model_file = pathlib.Path(model_path)
-    print(model_path)
     print(model_file)
     if not model_file.is_file():
         response = requests.get(v, timeout=30)
@@ -86,7 +86,7 @@ for i, (k, v) in enumerate(MOD_DIR.items()):
         else:
             print('File download failed!')
 
-# Read models.
+# Read models in dir into list.
 MODS = []
 for f in os.listdir(MODELS_PATH):
     if f.endswith('.pth'):
@@ -123,7 +123,7 @@ def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_
     scale = netscale
     model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=scale)
     # Set dni_weight to control the denoise strength.
-    if denoise >= 0:
+    if denoise > 0:
         dni_weight = [denoise, 1 - denoise]
     else:
         dni_weight = None
@@ -137,9 +137,10 @@ def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_
                 model=model,
                 tile=tile,
                 tile_pad=tile_pad,
-            pre_pad=pre_pad,
-            half=not fp_fmt,
-            gpu_id=gpu_id)
+                pre_pad=pre_pad,
+                half=not fp_fmt,
+                gpu_id=gpu_id
+            )
         except:
             ERROR = "💥 Oops, something went wrong!\n" + \
                     "Check whether netscale fits the model!"
@@ -178,8 +179,8 @@ class RealEsrganUpscaler:
                 "pre_pad": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 1}),
                 "fp_format": (["fp16", "fp32"], {}),
                 "denoise": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "netscale": ("INT", {"default": 4, "min": 1, "max": 64, "step": 1}),
                 "gpu_id": (GPU_LIST, {}),
+                "netscale": ("INT", {"default": 4, "min": 1, "max": 64, "step": 1}),
                 "models": (MODS, {}),
             }
         }
@@ -193,8 +194,9 @@ class RealEsrganUpscaler:
     OUTPUT_NODE = True
 
     def realesrgan_upscaler(self, image, gpu_id, scale_factor, tile_number,
-                            fp_format, models, denoise, netscale, tile_pad, pre_pad):
-        '''Detect ellipse.'''
+                            fp_format, models, denoise, netscale, tile_pad,
+                            pre_pad):
+        '''RealESRGAN upscaler.'''
         # Set value for paranoia reason.
         gpu_id = int(gpu_id)
         # Create a PIL image.
@@ -203,21 +205,24 @@ class RealEsrganUpscaler:
         imgNEW = img_input.copy()
         # Upscale image.
         imgNEW, ERROR = upscaler(imgNEW, scale_factor, gpu_id, tile_number,
-                                 fp_format, denoise, netscale, tile_pad, pre_pad, models)
-        print(ERROR)
+                                 fp_format, denoise, netscale, tile_pad,
+                                 pre_pad, models)
+        # Check if ERROR or imgNEW is None.
         if ERROR is not None or imgNEW is None:
+            # Set rows and cols.
             n,m = 512,512
+            # Create an empty image.
             errimg = np.zeros([n,m,3], dtype=np.uint8)
             # Add text to the image
+            text = "Oops, something went wrong!"
             position = (20, 256)
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 1
             color = (255, 0, 255)
             thickness = 2
-            text = "Oops, something went wrong!"
             cv2.putText(errimg, text, position, font, font_scale, color, thickness)
-            errimg = Image.fromarray(np.uint8(errimg))
-            imgNEW = errimg
+            # Create a PIL image.
+            imgNEW = Image.fromarray(np.uint8(errimg))
         # Create tensors from PIL.
         image_out = pil2tensor(imgNEW)
         # Return the upscaled image.
