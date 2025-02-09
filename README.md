@@ -34,6 +34,8 @@ the size of the image file.</p>
 
 ## Node Preview
 
+Figure 1 shows the node preview.
+
 <img src="./images/node_preview.png" alt="node preview" width="512">
 <p><i>Figure 1: Main node preview</i></p>
 
@@ -43,9 +45,10 @@ to-do ...
 
 ## Workflow Preview
 
-![Bildschirmfoto vom 2025-02-09 09-17-48](https://github.com/user-attachments/assets/9403af6d-d1a2-41e8-b112-f5185be3edaa)
+Figure 1 shows the example workflow preview.
 
-<p><i>Figure 2: Simple workflow preview</i></p>
+<img src="./images/workflow_preview.png" alt="node preview" width="512">
+<p><i>Figure 2: Workflow preview</i></p>
 
 ## Installation
 
