@@ -34,7 +34,10 @@ the size of the image file.</p>
 
 ## Node Preview
 
-Figure 1 shows the node preview.
+<p align="justify">Figure 1 shows the node preview. Input is an image. 
+Main output is the upscaled image. In addition to this one can output
+the local installation with respect to the GPUs. In case of an error
+the error can be printed too.</p>
 
 <img src="./images/node_preview.png" alt="node preview" width="512">
 <p><i>Figure 1: Main node preview</i></p>
