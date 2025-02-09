@@ -2,7 +2,7 @@
 
 > [!CAUTION]
 > Please note, that the node will run, only if an error in one
-> Python package file is fixed. 
+> Python package file is fixed. See the related section. 
 
 # Preface
 
