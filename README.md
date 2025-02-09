@@ -45,10 +45,15 @@ to-do ...
 
 ## Workflow Preview
 
-Figure 1 shows the example workflow preview.
+Figure 2 shows the example workflow preview.
 
 <img src="./images/workflow_preview.png" alt="node preview" width="1024">
 <p><i>Figure 2: Workflow preview</i></p>
+
+Figure 3 shows the example workflow preview.
+
+<img src="./images/workflow_error_preview.png" alt="node preview" width="1024">
+<p><i>Figure 3: Workflow preview</i></p>
 
 ## Installation
 
