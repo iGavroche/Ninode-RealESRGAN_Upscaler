@@ -57,7 +57,11 @@ The node has following parameter
 
 ## What the Node Does
 
-to-do ...
+The node can upscale images which have following formats
+
+- JPG/JPEG
+- PNG
+- WEBP
 
 ## Workflow Preview
 
@@ -73,8 +77,8 @@ Figure 3 shows the example workflow preview.
 
 ## Installation
 
-<p align="justify">Use the ComfyUI Manager for the installation. Use my nick 'zentrocdot' or for 
-'ComfyUI_realESRGAN_Upscaler'</p>
+<p align="justify">Use the ComfyUI Manager for the installation.
+Use my nick 'zentrocdot' or for 'ComfyUI_realESRGAN_Upscaler'</p>
 
 ## Known Problems
 
