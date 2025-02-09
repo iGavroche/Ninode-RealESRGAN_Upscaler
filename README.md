@@ -31,11 +31,23 @@ the size of the image file.</p>
 <img src="./images/node_preview.png" alt="node preview" width="512">
 <p><i>Figure 1: Main node preview</i></p>
 
+## What the Node Does
+
+to-do ...
+
 ## Workflow Preview
 
 ![image](https://github.com/user-attachments/assets/8ac47db6-6293-44d3-98e0-aae302bab020)
 
 <p><i>Figure 2: Simple workflow preview</i></p>
+
+## Installation
+
+to-do ...
+
+## Bug Fixing
+
+to-do ...
 
 ## Error Screen
 
@@ -53,6 +65,19 @@ be a x2, x4 or x8 and then it is easy to use the right netscale. If there
 is no note in the filename to the netscale one needs to guess about the 
 right one.</p> 
 
+## Limitations
+
+to-do ...
+
+## To-Do
+
+<p align="justify">There are a plenty of things to to</p>
+
+## Credits
+
+<p align="justify">Special credits goes to xinntao (Xintao Wang) for his excellent 
+work on ESRGAN and RealESRGAN models The results achieved are quite impressive.</p> 
+
 ## Final Words
 
 Have fun. Be inspired!
@@ -61,6 +86,8 @@ Have fun. Be inspired!
 
 [1] https://github.com/xinntao/Real-ESRGAN
 
-[2]
+[2] https://github.com/xinntao/Real-ESRGAN/blob/master/docs/model_zoo.md
 
-[3]
+[3] https://arxiv.org/abs/2107.10833
+
+[3] https://github.com/zentrocdot/ESRGAN_RRBD_CONVERTER
