@@ -35,11 +35,15 @@ the size of the image file.</p>
 
 ![image](https://github.com/user-attachments/assets/8ac47db6-6293-44d3-98e0-aae302bab020)
 
+<p><i>Figure 2: Simple workflow preview</i></p>
+
 ## Error Screen
 
 If you see an error screen which looks like the one below this is still intended as a possibility at present.
 
 ![Bildschirmfoto vom 2025-02-09 08-57-01](https://github.com/user-attachments/assets/03771469-3a59-4115-baba-a362b60d20fb)
+
+<p><i>Figure 2: Error message preview</i></p>
 
 <p align="justify">The error is easy to explain. Since I opened the
 upscaler node for other models than the given ones there may be collisions 
