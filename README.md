@@ -87,23 +87,24 @@ of the node failed. After first investigation I found the
 problem. Fix for the moment is as follows. Go into directory
 ComfyUI. Then search for a file.
 
- find -name "degradations.py"
+<code>find -name "degradations.py"</code>
 
 This looks like.
 
-./venv/lib/python3.10/site-packages/basicsr/data/degradations.py
+<code>./venv/lib/python3.10/site-packages/basicsr/data/degradations.py</code>
 
 Open the file e.g.
 
-nano ./venv/lib/python3.10/site-packages/basicsr/data/degradations.py
+<code>nano ./venv/lib/python3.10/site-packages/basicsr/data/degradations.py</code>
 
 and change
 
-from torchvision.transforms.functional_tensor import rgb_to_grayscale
+<code>from torchvision.transforms.functional_tensor import rgb_to_grayscale</code>
 
 to
 
-from torchvision.transforms.functional import rgb_to_grayscale
+<code>from torchvision.transforms.functional import rgb_to_grayscale</code>
+
 
 After that, the node will work.
 
