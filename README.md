@@ -57,7 +57,7 @@ The node has following parameter
 
 ## Model Selection
 
-<img src="./images/model_selection.png" alt="model selection" width="1024">
+<img src="./images/model_selection.png" alt="model selection" width="512">
 <p><i>Figure 2: Model selection</i></p>
 
 ## What the Node Does
