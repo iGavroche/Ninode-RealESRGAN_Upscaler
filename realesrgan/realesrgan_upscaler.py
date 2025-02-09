@@ -18,7 +18,7 @@ import pathlib
 # Set some module strings.
 __author__ = "zentrocdot"
 __copyright__ = "© Copyright 2025, zentrocdot"
-__version__ = "0.0.1.0"
+__version__ = "0.0.1.1"
 
 # Import the third party Python modules.
 from PIL import Image
@@ -100,11 +100,11 @@ def tensor2pil(image):
     # Return a PIL image.
     return Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
 
-# -------------------------------
-# Convert PIL to Tensor function.
-# -------------------------------
-def pil2tensor(image):
-    '''PIL image to Tensor.'''
+# ---------------------------------
+# Convert Numpy to Tensor function.
+# ---------------------------------
+def numpy2tensor(image):
+    '''Numpy image to Tensor.'''
     # Return a tensor.
     return torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
 
@@ -152,12 +152,12 @@ def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_
         torch.cuda.empty_cache()
         outimg = None
         ERROR = "An serious error occurred 💥. " + \
-                "CUDA out of memory. Try to set tile size to a smaller number."
+                "CUDA out of memory. Try to set tile size to a larger/smaller number."
     except UnboundLocalError as error:
         torch.cuda.empty_cache()
         outimg = None
         ERROR = "An serious error occurred 💥. " + \
-                "Image size problem occurs. Tile size problem occurs."
+                "Image size problem occurs. Tile size problem occurs. Check terminal."
     # Return the upscaled image.
     return outimg, ERROR
 
@@ -186,8 +186,8 @@ class RealEsrganUpscaler:
         }
 
     # Set the ComfyUI related variables.
-    RETURN_TYPES = ("IMAGE", "STRING", "STRING",)
-    RETURN_NAMES = ("IMAGE", "CONFIG", "ERROR",)
+    RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT", "STRING", "STRING",)
+    RETURN_NAMES = ("IMAGE", "MASK", "width", "height", "config_str", "error_str",)
     FUNCTION = "realesrgan_upscaler"
     CATEGORY = "💊 RealEsrganUpscaler"
     DESCRIPTION = "Upscaling using RealESRGAN."
@@ -212,7 +212,7 @@ class RealEsrganUpscaler:
             # Set rows and cols.
             n,m = 512,512
             # Create an empty image.
-            errimg = np.zeros([n,m,3], dtype=np.uint8)
+            imgNEW = np.zeros([n,m,3], dtype=np.uint8)
             # Add text to the image
             text = "Oops, something went wrong!"
             position = (20, 256)
@@ -220,10 +220,14 @@ class RealEsrganUpscaler:
             font_scale = 1
             color = (255, 0, 255)
             thickness = 2
-            cv2.putText(errimg, text, position, font, font_scale, color, thickness)
-            # Create a PIL image.
-            imgNEW = Image.fromarray(np.uint8(errimg))
+            cv2.putText(imgNEW, text, position, font, font_scale, color, thickness)
+        # Get width and height of the new image.
+        (height, width, channels) = imgNEW.shape
+        # Create a mask.
+        maskImage = np.zeros((height, width, channels), np.uint8)
+        mask = numpy2tensor(maskImage)
+        mask = mask[:, :, :, 1]
         # Create tensors from PIL.
-        image_out = pil2tensor(imgNEW)
+        image_out = numpy2tensor(imgNEW)
         # Return the upscaled image.
-        return (image_out, GPU_STR, ERROR,)
+        return (image_out, mask, width, height, GPU_STR, ERROR,)
