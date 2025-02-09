@@ -37,7 +37,7 @@ to-do ...
 
 ## Workflow Preview
 
-![image](https://github.com/user-attachments/assets/8ac47db6-6293-44d3-98e0-aae302bab020)
+![Bildschirmfoto vom 2025-02-09 09-17-48](https://github.com/user-attachments/assets/9403af6d-d1a2-41e8-b112-f5185be3edaa)
 
 <p><i>Figure 2: Simple workflow preview</i></p>
 
