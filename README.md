@@ -73,6 +73,33 @@ Figure 3 shows the example workflow preview.
 <p align="justify">Use the ComfyUI Manager for the installation. Use my nick 'zentrocdot' or for 
 'ComfyUI_realESRGAN_Upscaler'</p>
 
+## Known Problems
+
+While first run I got an error message that the installation
+of the node failed. After first investigation I found the 
+problem. Fix for the moment is as follows. Go into directory
+ComfyUI. Then search for a file.
+
+ find -name "degradations.py"
+
+This looks like.
+
+./venv/lib/python3.10/site-packages/basicsr/data/degradations.py
+
+Open the file e.g.
+
+nano ./venv/lib/python3.10/site-packages/basicsr/data/degradations.py
+
+and change
+
+from torchvision.transforms.functional_tensor import rgb_to_grayscale
+
+to
+
+from torchvision.transforms.functional import rgb_to_grayscale
+
+After that, the node will work.
+
 ## Bug Fixing
 
 in the directory is a file called fix.bash. This can be used to fix
