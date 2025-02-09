@@ -96,14 +96,6 @@ for a resolution of 1024 upwards.
 <img src="./images/model_selection.png" alt="model selection" width="512">
 <p><i>Figure 2: Model selection</i></p>
 
-## Tiling
-
-If the tiling is wrong set, one will get following error:
-
-![Bildschirmfoto vom 2025-02-09 19-19-43](https://github.com/user-attachments/assets/b2684003-d7ad-490b-8367-9bf433c22ce5)
-
-<p><i>Figure 2a: Tiling problem preview</i></p>
-
 ## What the Node Does
 
 The node can upscale images which have following formats
@@ -123,6 +115,14 @@ Figure 4 shows the example workflow preview.
 
 <img src="./images/workflow_error_preview.png" alt="node preview" width="1024">
 <p><i>Figure 4: Workflow preview</i></p>
+
+## Tiling
+
+If the tiling is wrong set, one will get following error:
+
+![Bildschirmfoto vom 2025-02-09 19-19-43](https://github.com/user-attachments/assets/b2684003-d7ad-490b-8367-9bf433c22ce5)
+
+<p><i>Figure 4a: Tiling problem preview</i></p>
 
 ## Installation
 
