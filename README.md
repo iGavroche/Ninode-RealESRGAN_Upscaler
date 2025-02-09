@@ -11,11 +11,19 @@
 > if an error in one Python package file is fixed. See the 
 > related section for informations on this topic.</p> 
 
-# Preface
+## Preface
 
 <p align="justify">This node uses the RealESRGAN model from
 xinntao [1]. This is my personal favourite upscaling model and 
 upscaling approach.</p>
+
+## Prerequisites
+
+<p align="justify">What I am writing is valid for a computer on
+which as the operating system Linux is installed.</p>
+
+<p align="justify">To run the upscaler one needs a NVIDIA graphic
+card.</p>
 
 ## Whats New
 
@@ -55,11 +63,11 @@ The node has following parameter
 + gpu_id (LIST)
 + model (LIST)
 
-For an upscaling one needs in a first shot the scale factor and a model. 
-The other parameter can be as they are. For a resolution of the image of
-512 x 512 pixel this is in general valid. 
+<p align="justify">For an upscaling one needs in a first shot the scale 
+factor and a model. The other parameter can be as they are. For a 
+resolution of the image of 512 x 512 pixel this is in general valid.</p> 
 
-Over the gpu_id the user can decide, which GPU should be used.
+Over the gpu_id the user can decide, which GPU should be used for the upscaling.
 
 Depending on the hardware one needs the tiling. In my case I needs tiling 
 for a resolution of 1024 upwards.
