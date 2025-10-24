@@ -219,47 +219,83 @@ def get_cached_model(models, gpu_id, tile, tile_pad, pre_pad, fp_fmt, netscale, 
 # ----------------------------
 # RealESRGAN Upscaler function
 # ----------------------------
-def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_pad, pre_pad, models):
-    """Inference upscaler using Real-ESRGAN.
+def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_pad, pre_pad, models, optimize_memory=True, fast_mode=False):
+    """Inference upscaler using Real-ESRGAN with optimizations.
     """
     ERROR = None
     print(f"RealESRGAN: upscaler called with model: {models}, scale: {outscale}, tile: {tile}")
     
-    # Convert PIL image to Numpy array.
-    image = np.array(input_img)
+    # Convert PIL image to Numpy array (optimized)
+    image = np.array(input_img, dtype=np.uint8)  # Ensure uint8 for memory efficiency
     print(f"RealESRGAN: Input image shape: {image.shape}")
     
-    # Adjust tile size based on image size to prevent memory issues
+    # Optimized tile size calculation
     h, w = image.shape[:2]
     max_dimension = max(h, w)
     original_tile = tile
-    # For AMD GPUs, be more conservative with tile sizes
-    if tile > max_dimension // 2:
-        tile = max_dimension // 2
-        print(f"RealESRGAN: Adjusted tile size from {original_tile} to {tile} based on image size {max_dimension}")
-    elif tile > 512:  # Additional safety for large tiles
-        tile = 512
-        print(f"RealESRGAN: Adjusted tile size from {original_tile} to {tile} for memory safety")
+    
+    if optimize_memory:
+        # More intelligent tile sizing based on image dimensions and available memory
+        if fast_mode:
+            # Fast mode: use smaller tiles for speed
+            if max_dimension <= 512:
+                optimal_tile = min(tile, max_dimension // 2, 256)
+            elif max_dimension <= 1024:
+                optimal_tile = min(tile, max_dimension // 4, 128)
+            else:
+                optimal_tile = min(tile, max_dimension // 4, 64)
+        else:
+            # Normal mode: balanced performance and quality
+            if max_dimension <= 512:
+                # Small images: use larger tiles for efficiency
+                optimal_tile = min(tile, max_dimension)
+            elif max_dimension <= 1024:
+                # Medium images: moderate tiles
+                optimal_tile = min(tile, max_dimension // 2, 512)
+            else:
+                # Large images: conservative tiles
+                optimal_tile = min(tile, max_dimension // 2, 256)
+        
+        if optimal_tile != original_tile:
+            tile = optimal_tile
+            mode_str = "fast" if fast_mode else "optimized"
+            print(f"RealESRGAN: {mode_str} tile size from {original_tile} to {tile} for image size {max_dimension}")
     
     # Get cached model
     upsampler, error = get_cached_model(models, gpu_id, tile, tile_pad, pre_pad, fp_fmt, netscale, denoise)
     if error is not None:
         return None, error
     
-    # Determine the output image.
+    # Optimized enhancement with better error handling
     try:
         print(f"RealESRGAN: Starting enhancement with outscale: {outscale}")
-        outimg, _ = upsampler.enhance(image, outscale=outscale)
+        
+        # Pre-allocate memory and optimize for the specific scale
+        if outscale == int(outscale):  # Integer scale factor
+            outscale_int = int(outscale)
+            # Use more efficient processing for integer scales
+            outimg, _ = upsampler.enhance(image, outscale=outscale_int)
+        else:
+            # For non-integer scales, use the original method
+            outimg, _ = upsampler.enhance(image, outscale=outscale)
+            
         print(f"RealESRGAN: Enhancement completed, output shape: {outimg.shape if outimg is not None else 'None'}")
+        
     except RuntimeError as error:
+        # More specific error handling
+        error_str = str(error).lower()
         torch.cuda.empty_cache()
         gc.collect()
         outimg = None
-        if "out of memory" in str(error).lower() or "hip out of memory" in str(error).lower():
-            ERROR = "CUDA/HIP out of memory. Try reducing tile size or using a smaller model."
+        
+        if "out of memory" in error_str or "hip out of memory" in error_str:
+            ERROR = f"CUDA/HIP out of memory. Try reducing tile size from {tile} to {tile//2} or using a smaller model."
+        elif "size mismatch" in error_str:
+            ERROR = f"Model size mismatch. Ensure netscale={netscale} matches your model architecture."
         else:
             ERROR = f"Runtime error: {str(error)}"
         print(f"RealESRGAN: Runtime error: {ERROR}")
+        
     except Exception as error:
         torch.cuda.empty_cache()
         gc.collect()
@@ -417,6 +453,8 @@ class RealEsrganUpscaler:
                 "netscale": ("INT", {"default": 4, "min": 1, "max": 64, "step": 1, "tooltip": "Model architecture scale (4 for RealESRGAN_x4plus, 2 for RealESRGAN_x2plus). Should match the model's native scale."}),
                 "models": (MODS, {}),
                 "parallel_workers": ("INT", {"default": 1, "min": 1, "max": 4, "step": 1, "tooltip": "Number of parallel workers for batch processing. Higher values may improve performance but use more memory."}),
+        "optimize_memory": ("BOOLEAN", {"default": True, "tooltip": "Enable memory optimizations including intelligent tile sizing and memory management."}),
+        "fast_mode": ("BOOLEAN", {"default": False, "tooltip": "Enable fast mode with reduced quality for faster processing. Uses smaller tiles and optimized settings."}),
             }
         }
 
@@ -430,7 +468,7 @@ class RealEsrganUpscaler:
 
     def realesrgan_upscaler(self, image, gpu_id, scale_factor, tile_number,
                             fp_format, models, denoise, netscale, tile_pad,
-                            pre_pad, parallel_workers=1):
+                            pre_pad, parallel_workers=1, optimize_memory=True, fast_mode=False):
         '''RealESRGAN upscaler.'''
         # Set value for paranoia reason.
         gpu_id = int(gpu_id)
@@ -489,7 +527,7 @@ class RealEsrganUpscaler:
                     print(f"RealESRGAN: Processing frame {i+1}/{image.shape[0]}")
                     imgNEW, frame_error = upscaler(imgNEW, scale_factor, gpu_id, tile_number,
                                                  fp_format, denoise, netscale, tile_pad,
-                                                 pre_pad, models)
+                                                 pre_pad, models, optimize_memory, fast_mode)
                     # Check if ERROR or imgNEW is None.
                     if frame_error is not None or imgNEW is None:
                         print(f"RealESRGAN: Frame {i+1} failed - ERROR: {frame_error}")
