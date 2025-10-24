@@ -373,17 +373,20 @@ def process_single_frame(args):
     # Check if ERROR or imgNEW is None.
     if frame_error is not None or imgNEW is None:
         print(f"RealESRGAN: Frame {frame_idx+1} failed - ERROR: {frame_error}")
-        # Set rows and cols.
-        n,m = 512,512
-        # Create an empty image.
-        imgNEW = np.zeros([n,m,3], dtype=np.uint8)
+        # Create error image with same dimensions as input
+        h, w = img_input.size[1], img_input.size[0]  # PIL size is (width, height)
+        # Scale up to match expected output size
+        scale_factor_int = int(scale_factor)
+        error_h, error_w = h * scale_factor_int, w * scale_factor_int
+        # Create an empty image with correct dimensions
+        imgNEW = np.zeros([error_h, error_w, 3], dtype=np.uint8)
         # Add text to the image
         text = f"Error - Frame {frame_idx+1}"
-        position = (20, 256)
+        position = (20, error_h // 2)
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1
+        font_scale = max(1, error_w // 500)  # Scale font with image size
         color = (255, 0, 0)
-        thickness = 2
+        thickness = max(2, error_w // 300)  # Scale thickness with image size
         cv2.putText(imgNEW, text, position, font, font_scale, color, thickness)
     else:
         print(f"RealESRGAN: Frame {frame_idx+1} processed successfully")
@@ -451,7 +454,15 @@ class RealEsrganUpscaler:
             batch_errors = []
             
             if parallel_workers > 1:
-                # Parallel processing
+                # Parallel processing (no caching to avoid race conditions)
+                # Reduce tile size for parallel processing to prevent memory issues
+                parallel_tile = min(tile_number, 256)  # More conservative tile size for parallel
+                print(f"RealESRGAN: Using reduced tile size {parallel_tile} for parallel processing")
+                
+                # Update frame args with reduced tile size
+                frame_args = [(i, single_image, scale_factor, gpu_id, parallel_tile, fp_format, denoise, netscale, tile_pad, pre_pad, models) 
+                             for i, single_image in enumerate(image)]
+                
                 with ThreadPoolExecutor(max_workers=parallel_workers) as executor:
                     # Submit all tasks
                     future_to_index = {executor.submit(process_single_frame, args): args[0] for args in frame_args}
@@ -466,12 +477,46 @@ class RealEsrganUpscaler:
                         completed += 1
                         pbar.update(1)
             else:
-                # Sequential processing (original behavior)
-                for i, args in enumerate(frame_args):
-                    frame_idx, upscaled_tensor, frame_error = process_single_frame(args)
-                    upscaled_images[frame_idx] = upscaled_tensor
-                    if frame_error is not None:
-                        batch_errors.append(f"Frame {frame_idx+1}: {frame_error}")
+                # Sequential processing with caching (original behavior)
+                for i in range(image.shape[0]):
+                    # Extract single image from batch
+                    single_image = image[i]
+                    # Create a PIL image.
+                    img_input = tensor2pil(single_image)
+                    # Copy image.
+                    imgNEW = img_input.copy()
+                    # Upscale image.
+                    print(f"RealESRGAN: Processing frame {i+1}/{image.shape[0]}")
+                    imgNEW, frame_error = upscaler(imgNEW, scale_factor, gpu_id, tile_number,
+                                                 fp_format, denoise, netscale, tile_pad,
+                                                 pre_pad, models)
+                    # Check if ERROR or imgNEW is None.
+                    if frame_error is not None or imgNEW is None:
+                        print(f"RealESRGAN: Frame {i+1} failed - ERROR: {frame_error}")
+                        batch_errors.append(f"Frame {i+1}: {frame_error}")
+                        # Create error image with same dimensions as input
+                        h, w = img_input.size[1], img_input.size[0]  # PIL size is (width, height)
+                        # Scale up to match expected output size
+                        scale_factor_int = int(scale_factor)
+                        error_h, error_w = h * scale_factor_int, w * scale_factor_int
+                        # Create an empty image with correct dimensions
+                        imgNEW = np.zeros([error_h, error_w, 3], dtype=np.uint8)
+                        # Add text to the image
+                        text = f"Error - Frame {i+1}"
+                        position = (20, error_h // 2)
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        font_scale = max(1, error_w // 500)  # Scale font with image size
+                        color = (255, 0, 0)
+                        thickness = max(2, error_w // 300)  # Scale thickness with image size
+                        cv2.putText(imgNEW, text, position, font, font_scale, color, thickness)
+                    else:
+                        print(f"RealESRGAN: Frame {i+1} processed successfully")
+                    
+                    # Convert back to tensor and add to batch
+                    upscaled_tensor = numpy2tensor_batch(imgNEW)
+                    upscaled_images[i] = upscaled_tensor
+                    
+                    # Update progress bar
                     pbar.update(1)
             
             # Combine all errors into a single error string
