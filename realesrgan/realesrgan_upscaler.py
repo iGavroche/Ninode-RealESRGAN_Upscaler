@@ -394,8 +394,9 @@ class RealEsrganUpscaler:
             
             # Stack all upscaled images into a batch
             upscaled_batch = torch.stack(upscaled_images)
-            # Get width and height of the first image
-            (height, width, channels) = imgNEW.shape
+            # Get width and height from the first upscaled image
+            first_image = upscaled_images[0]
+            (height, width, channels) = first_image.shape
             # Create a mask for the batch
             maskImage = np.zeros((height, width, channels), np.uint8)
             mask = numpy2tensor_batch(maskImage)
