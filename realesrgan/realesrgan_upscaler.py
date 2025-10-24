@@ -154,37 +154,39 @@ def get_cached_model(models, gpu_id, tile, tile_pad, pre_pad, fp_fmt, netscale, 
     # Cache key for the base model (without tile size)
     model_cache_key = f"{MODEL_PATH}_{gpu_id}_{fp_fmt}_{netscale}_{denoise}"
     
-    # Check if we have a cached model
-    if model_cache_key in _model_cache:
-        print(f"RealESRGAN: Using cached model for {models}")
-        cached_model = _model_cache[model_cache_key]
-    else:
-        print(f"RealESRGAN: Creating new model for {models}")
-        
-        # Check if the model file exists.
-        if not os.path.isfile(MODEL_PATH):
-            return None, f"Model file not found: {MODEL_PATH}"
-        
-        # Define the upscaler upsampler - create model and pass to RealESRGANer
-        with ClearCache():
-            try:
-                print(f"RealESRGAN: Creating RRDBNet model with scale={netscale}")
-                # Create the RRDBNet model with standard parameters for RealESRGAN
-                # Use netscale (4) for the model architecture, not the output scale
-                # For RealESRGAN_x4plus, the model should always be scale=4
-                model_scale = 4 if models == 'RealESRGAN_x4plus.pth' else netscale
-                print(f"RealESRGAN: Using model_scale={model_scale} for {models}")
-                model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=model_scale, num_feat=64, num_block=23, num_grow_ch=32)
-                print(f"RealESRGAN: RRDBNet model created successfully, conv_first weight shape: {model.conv_first.weight.shape}")
-                
-                # Cache the model
-                _model_cache[model_cache_key] = model
-                cached_model = model
-                
-            except Exception as e:
-                ERROR = f"Failed to create model: {str(e)}"
-                print(f"RealESRGAN: {ERROR}")
-                return None, ERROR
+    # Thread-safe model caching
+    with _thread_lock:
+        # Check if we have a cached model
+        if model_cache_key in _model_cache:
+            print(f"RealESRGAN: Using cached model for {models}")
+            cached_model = _model_cache[model_cache_key]
+        else:
+            print(f"RealESRGAN: Creating new model for {models}")
+            
+            # Check if the model file exists.
+            if not os.path.isfile(MODEL_PATH):
+                return None, f"Model file not found: {MODEL_PATH}"
+            
+            # Define the upscaler upsampler - create model and pass to RealESRGANer
+            with ClearCache():
+                try:
+                    print(f"RealESRGAN: Creating RRDBNet model with scale={netscale}")
+                    # Create the RRDBNet model with standard parameters for RealESRGAN
+                    # Use netscale (4) for the model architecture, not the output scale
+                    # For RealESRGAN_x4plus, the model should always be scale=4
+                    model_scale = 4 if models == 'RealESRGAN_x4plus.pth' else netscale
+                    print(f"RealESRGAN: Using model_scale={model_scale} for {models}")
+                    model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=model_scale, num_feat=64, num_block=23, num_grow_ch=32)
+                    print(f"RealESRGAN: RRDBNet model created successfully, conv_first weight shape: {model.conv_first.weight.shape}")
+                    
+                    # Cache the model
+                    _model_cache[model_cache_key] = model
+                    cached_model = model
+                    
+                except Exception as e:
+                    ERROR = f"Failed to create model: {str(e)}"
+                    print(f"RealESRGAN: {ERROR}")
+                    return None, ERROR
     
     # Set dni_weight to control the denoise strength.
     if denoise > 0:
@@ -268,6 +270,91 @@ def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_
     # Return the upscaled image.
     return outimg, ERROR
 
+def upscaler_no_cache(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_pad, pre_pad, models):
+    """Inference upscaler using Real-ESRGAN without caching (for parallel processing)."""
+    ERROR = None
+    print(f"RealESRGAN: upscaler_no_cache called with model: {models}, scale: {outscale}, tile: {tile}")
+    
+    # Convert PIL image to Numpy array.
+    image = np.array(input_img)
+    print(f"RealESRGAN: Input image shape: {image.shape}")
+    
+    # Adjust tile size based on image size to prevent memory issues
+    h, w = image.shape[:2]
+    max_dimension = max(h, w)
+    original_tile = tile
+    if tile > max_dimension // 2:
+        tile = max_dimension // 2
+        print(f"RealESRGAN: Adjusted tile size from {original_tile} to {tile} based on image size {max_dimension}")
+    elif tile > 512:  # Additional safety for large tiles
+        tile = 512
+        print(f"RealESRGAN: Adjusted tile size from {original_tile} to {tile} for memory safety")
+    
+    MODEL_PATH = '/'.join([str(MODELS_PATH), models])
+    
+    # Check if the model file exists.
+    if not os.path.isfile(MODEL_PATH):
+        return None, f"Model file not found: {MODEL_PATH}"
+    
+    # Set dni_weight to control the denoise strength.
+    if denoise > 0:
+        dni_weight = [denoise, 1 - denoise]
+    else:
+        dni_weight = None
+    
+    # Create model and RealESRGANer without caching
+    with ClearCache():
+        try:
+            print(f"RealESRGAN: Creating RRDBNet model with scale={netscale}")
+            # Create the RRDBNet model with standard parameters for RealESRGAN
+            model_scale = 4 if models == 'RealESRGAN_x4plus.pth' else netscale
+            print(f"RealESRGAN: Using model_scale={model_scale} for {models}")
+            model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=model_scale, num_feat=64, num_block=23, num_grow_ch=32)
+            print(f"RealESRGAN: RRDBNet model created successfully, conv_first weight shape: {model.conv_first.weight.shape}")
+            
+            print(f"RealESRGAN: Creating RealESRGANer with model_path: {MODEL_PATH}")
+            upsampler = RealESRGANer(
+                scale=netscale,
+                model_path=MODEL_PATH,
+                model=model,
+                dni_weight=dni_weight,
+                tile=tile,
+                tile_pad=tile_pad,
+                pre_pad=pre_pad,
+                half=not fp_fmt,
+                gpu_id=gpu_id
+            )
+            print("RealESRGAN: RealESRGANer created successfully")
+            
+        except Exception as e:
+            ERROR = f"Failed to create upsampler: {str(e)}"
+            print(f"RealESRGAN: {ERROR}")
+            return None, ERROR
+    
+    # Determine the output image.
+    try:
+        print(f"RealESRGAN: Starting enhancement with outscale: {outscale}")
+        outimg, _ = upsampler.enhance(image, outscale=outscale)
+        print(f"RealESRGAN: Enhancement completed, output shape: {outimg.shape if outimg is not None else 'None'}")
+    except RuntimeError as error:
+        torch.cuda.empty_cache()
+        gc.collect()
+        outimg = None
+        if "out of memory" in str(error).lower() or "hip out of memory" in str(error).lower():
+            ERROR = "CUDA/HIP out of memory. Try reducing tile size or using a smaller model."
+        else:
+            ERROR = f"Runtime error: {str(error)}"
+        print(f"RealESRGAN: Runtime error: {ERROR}")
+    except Exception as error:
+        torch.cuda.empty_cache()
+        gc.collect()
+        outimg = None
+        ERROR = f"Error during upscaling: {str(error)}"
+        print(f"RealESRGAN: General error: {ERROR}")
+    
+    # Return the upscaled image.
+    return outimg, ERROR
+
 def process_single_frame(args):
     """Process a single frame for parallel processing."""
     frame_idx, single_image, scale_factor, gpu_id, tile_number, fp_format, denoise, netscale, tile_pad, pre_pad, models = args
@@ -278,9 +365,10 @@ def process_single_frame(args):
     imgNEW = img_input.copy()
     # Upscale image.
     print(f"RealESRGAN: Processing frame {frame_idx+1}")
-    imgNEW, frame_error = upscaler(imgNEW, scale_factor, gpu_id, tile_number,
-                                   fp_format, denoise, netscale, tile_pad,
-                                   pre_pad, models)
+    # For parallel processing, don't use cached models to avoid thread safety issues
+    imgNEW, frame_error = upscaler_no_cache(imgNEW, scale_factor, gpu_id, tile_number,
+                                           fp_format, denoise, netscale, tile_pad,
+                                           pre_pad, models)
     
     # Check if ERROR or imgNEW is None.
     if frame_error is not None or imgNEW is None:
