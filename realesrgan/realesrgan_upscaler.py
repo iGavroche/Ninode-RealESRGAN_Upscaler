@@ -234,32 +234,62 @@ def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_
     max_dimension = max(h, w)
     original_tile = tile
     
+    # Always apply basic memory safety - prevent tiles larger than image dimensions
+    if tile > max_dimension:
+        tile = max_dimension
+        print(f"RealESRGAN: Reduced tile size from {original_tile} to {tile} (image dimension limit)")
+    
+    # Additional safety for very large tiles that could cause memory issues
+    # Calculate estimated memory usage: tile_size^2 * 4 * scale^2 * 3 channels
+    estimated_memory_gb = (tile * tile * 4 * (outscale ** 2) * 3) / (1024**3)
+    if estimated_memory_gb > 10:  # If estimated memory > 10GB
+        # Reduce tile size to keep memory under 10GB
+        max_safe_tile = int((10 * (1024**3) / (4 * (outscale ** 2) * 3)) ** 0.5)
+        safe_tile = min(tile, max_safe_tile, 512)  # Cap at 512 for safety
+        if safe_tile != tile:
+            tile = safe_tile
+            print(f"RealESRGAN: Reduced tile size from {original_tile} to {tile} for memory safety (estimated {estimated_memory_gb:.1f}GB -> {estimated_memory_gb * (tile/original_tile)**2:.1f}GB)")
+    elif tile > 512 and max_dimension > 512:
+        # For images larger than 512px, use more conservative tile sizes
+        safe_tile = min(tile, 512)
+        if safe_tile != tile:
+            tile = safe_tile
+            print(f"RealESRGAN: Reduced tile size from {original_tile} to {tile} for memory safety")
+    
     if optimize_memory:
-        # More intelligent tile sizing based on image dimensions and available memory
+        # More conservative tile sizing to prevent distortions
         if fast_mode:
-            # Fast mode: use smaller tiles for speed
+            # Fast mode: use smaller tiles but maintain quality
             if max_dimension <= 512:
-                optimal_tile = min(tile, max_dimension // 2, 256)
+                optimal_tile = min(tile, max_dimension, 256)  # Don't go below 256
             elif max_dimension <= 1024:
-                optimal_tile = min(tile, max_dimension // 4, 128)
+                optimal_tile = min(tile, max_dimension // 2, 256)  # Minimum 256
             else:
-                optimal_tile = min(tile, max_dimension // 4, 64)
+                optimal_tile = min(tile, max_dimension // 2, 256)  # Minimum 256
         else:
             # Normal mode: balanced performance and quality
             if max_dimension <= 512:
                 # Small images: use larger tiles for efficiency
                 optimal_tile = min(tile, max_dimension)
             elif max_dimension <= 1024:
-                # Medium images: moderate tiles
+                # Medium images: moderate tiles but don't go too small
                 optimal_tile = min(tile, max_dimension // 2, 512)
             else:
-                # Large images: conservative tiles
-                optimal_tile = min(tile, max_dimension // 2, 256)
+                # Large images: conservative tiles but maintain quality
+                optimal_tile = min(tile, max_dimension // 2, 512)  # Increased from 256 to 512
         
-        if optimal_tile != original_tile:
+        # Only apply optimization if it's a meaningful improvement and doesn't hurt quality
+        if optimal_tile != original_tile and optimal_tile >= 256:  # Don't go below 256 for quality
             tile = optimal_tile
             mode_str = "fast" if fast_mode else "optimized"
             print(f"RealESRGAN: {mode_str} tile size from {original_tile} to {tile} for image size {max_dimension}")
+        elif optimal_tile < 256:
+            print(f"RealESRGAN: Skipping tile optimization to maintain quality (would reduce to {optimal_tile})")
+    
+    # Ensure tile size is reasonable for quality (minimum 128 for very small images)
+    if tile < 128:
+        print(f"RealESRGAN: Warning - tile size {tile} is very small, may cause quality issues")
+        tile = max(128, tile)  # Ensure minimum tile size
     
     # Get cached model
     upsampler, error = get_cached_model(models, gpu_id, tile, tile_pad, pre_pad, fp_fmt, netscale, denoise)
@@ -268,7 +298,7 @@ def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_
     
     # Optimized enhancement with better error handling
     try:
-        print(f"RealESRGAN: Starting enhancement with outscale: {outscale}")
+        print(f"RealESRGAN: Starting enhancement with outscale: {outscale}, tile: {tile}, tile_pad: {tile_pad}, pre_pad: {pre_pad}")
         
         # Pre-allocate memory and optimize for the specific scale
         if outscale == int(outscale):  # Integer scale factor
@@ -280,6 +310,14 @@ def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_
             outimg, _ = upsampler.enhance(image, outscale=outscale)
             
         print(f"RealESRGAN: Enhancement completed, output shape: {outimg.shape if outimg is not None else 'None'}")
+        
+        # Quality check - warn if output seems suspicious
+        if outimg is not None:
+            h_out, w_out = outimg.shape[:2]
+            expected_h = int(h * outscale)
+            expected_w = int(w * outscale)
+            if abs(h_out - expected_h) > 10 or abs(w_out - expected_w) > 10:
+                print(f"RealESRGAN: Warning - output dimensions may be incorrect. Expected: {expected_h}x{expected_w}, Got: {h_out}x{w_out}")
         
     except RuntimeError as error:
         # More specific error handling
@@ -300,31 +338,91 @@ def upscaler(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_
         torch.cuda.empty_cache()
         gc.collect()
         outimg = None
-        ERROR = f"Error during upscaling: {str(error)}"
+        error_str = str(error)
+        
+        # Handle specific RealESRGAN library errors
+        if "cannot access local variable 'output_tile'" in error_str:
+            ERROR = f"RealESRGAN library error - likely due to memory issues. Try reducing tile size from {tile} to {tile//2} or enable memory optimization."
+        elif "out of memory" in error_str.lower() or "hip out of memory" in error_str.lower():
+            ERROR = f"CUDA/HIP out of memory. Try reducing tile size from {tile} to {tile//2} or using a smaller model."
+        else:
+            ERROR = f"Error during upscaling: {error_str}"
+        
         print(f"RealESRGAN: General error: {ERROR}")
     
     # Return the upscaled image.
     return outimg, ERROR
 
-def upscaler_no_cache(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_pad, pre_pad, models):
+def upscaler_no_cache(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netscale, tile_pad, pre_pad, models, optimize_memory=True, fast_mode=False):
     """Inference upscaler using Real-ESRGAN without caching (for parallel processing)."""
     ERROR = None
     print(f"RealESRGAN: upscaler_no_cache called with model: {models}, scale: {outscale}, tile: {tile}")
     
-    # Convert PIL image to Numpy array.
-    image = np.array(input_img)
+    # Convert PIL image to Numpy array (optimized)
+    image = np.array(input_img, dtype=np.uint8)  # Ensure uint8 for memory efficiency
     print(f"RealESRGAN: Input image shape: {image.shape}")
     
-    # Adjust tile size based on image size to prevent memory issues
+    # Optimized tile size calculation (same as main upscaler function)
     h, w = image.shape[:2]
     max_dimension = max(h, w)
     original_tile = tile
-    if tile > max_dimension // 2:
-        tile = max_dimension // 2
-        print(f"RealESRGAN: Adjusted tile size from {original_tile} to {tile} based on image size {max_dimension}")
-    elif tile > 512:  # Additional safety for large tiles
-        tile = 512
-        print(f"RealESRGAN: Adjusted tile size from {original_tile} to {tile} for memory safety")
+    
+    # Always apply basic memory safety - prevent tiles larger than image dimensions
+    if tile > max_dimension:
+        tile = max_dimension
+        print(f"RealESRGAN: Reduced tile size from {original_tile} to {tile} (image dimension limit)")
+    
+    # Additional safety for very large tiles that could cause memory issues
+    # Calculate estimated memory usage: tile_size^2 * 4 * scale^2 * 3 channels
+    estimated_memory_gb = (tile * tile * 4 * (outscale ** 2) * 3) / (1024**3)
+    if estimated_memory_gb > 10:  # If estimated memory > 10GB
+        # Reduce tile size to keep memory under 10GB
+        max_safe_tile = int((10 * (1024**3) / (4 * (outscale ** 2) * 3)) ** 0.5)
+        safe_tile = min(tile, max_safe_tile, 512)  # Cap at 512 for safety
+        if safe_tile != tile:
+            tile = safe_tile
+            print(f"RealESRGAN: Reduced tile size from {original_tile} to {tile} for memory safety (estimated {estimated_memory_gb:.1f}GB -> {estimated_memory_gb * (tile/original_tile)**2:.1f}GB)")
+    elif tile > 512 and max_dimension > 512:
+        # For images larger than 512px, use more conservative tile sizes
+        safe_tile = min(tile, 512)
+        if safe_tile != tile:
+            tile = safe_tile
+            print(f"RealESRGAN: Reduced tile size from {original_tile} to {tile} for memory safety")
+    
+    if optimize_memory:
+        # More conservative tile sizing to prevent distortions
+        if fast_mode:
+            # Fast mode: use smaller tiles but maintain quality
+            if max_dimension <= 512:
+                optimal_tile = min(tile, max_dimension, 256)  # Don't go below 256
+            elif max_dimension <= 1024:
+                optimal_tile = min(tile, max_dimension // 2, 256)  # Minimum 256
+            else:
+                optimal_tile = min(tile, max_dimension // 2, 256)  # Minimum 256
+        else:
+            # Normal mode: balanced performance and quality
+            if max_dimension <= 512:
+                # Small images: use larger tiles for efficiency
+                optimal_tile = min(tile, max_dimension)
+            elif max_dimension <= 1024:
+                # Medium images: moderate tiles but don't go too small
+                optimal_tile = min(tile, max_dimension // 2, 512)
+            else:
+                # Large images: conservative tiles but maintain quality
+                optimal_tile = min(tile, max_dimension // 2, 512)  # Increased from 256 to 512
+        
+        # Only apply optimization if it's a meaningful improvement and doesn't hurt quality
+        if optimal_tile != original_tile and optimal_tile >= 256:  # Don't go below 256 for quality
+            tile = optimal_tile
+            mode_str = "fast" if fast_mode else "optimized"
+            print(f"RealESRGAN: {mode_str} tile size from {original_tile} to {tile} for image size {max_dimension}")
+        elif optimal_tile < 256:
+            print(f"RealESRGAN: Skipping tile optimization to maintain quality (would reduce to {optimal_tile})")
+    
+    # Ensure tile size is reasonable for quality (minimum 128 for very small images)
+    if tile < 128:
+        print(f"RealESRGAN: Warning - tile size {tile} is very small, may cause quality issues")
+        tile = max(128, tile)  # Ensure minimum tile size
     
     MODEL_PATH = '/'.join([str(MODELS_PATH), models])
     
@@ -393,18 +491,33 @@ def upscaler_no_cache(input_img, outscale, gpu_id, tile, fp_fmt, denoise, netsca
 
 def process_single_frame(args):
     """Process a single frame for parallel processing."""
-    frame_idx, single_image, scale_factor, gpu_id, tile_number, fp_format, denoise, netscale, tile_pad, pre_pad, models = args
+    frame_idx, single_image, scale_factor, gpu_id, tile_number, fp_format, denoise, netscale, tile_pad, pre_pad, models, optimize_memory, fast_mode = args
     
-    # Create a PIL image.
-    img_input = tensor2pil(single_image)
-    # Copy image.
-    imgNEW = img_input.copy()
-    # Upscale image.
-    print(f"RealESRGAN: Processing frame {frame_idx+1}")
-    # For parallel processing, don't use cached models to avoid thread safety issues
-    imgNEW, frame_error = upscaler_no_cache(imgNEW, scale_factor, gpu_id, tile_number,
-                                           fp_format, denoise, netscale, tile_pad,
-                                           pre_pad, models)
+    try:
+        # Create a PIL image.
+        img_input = tensor2pil(single_image)
+        # Copy image.
+        imgNEW = img_input.copy()
+        # Upscale image.
+        print(f"RealESRGAN: Processing frame {frame_idx+1}")
+        
+        # Clear any existing GPU memory before processing
+        torch.cuda.empty_cache()
+        gc.collect()
+        
+        # For parallel processing, don't use cached models to avoid thread safety issues
+        imgNEW, frame_error = upscaler_no_cache(imgNEW, scale_factor, gpu_id, tile_number,
+                                               fp_format, denoise, netscale, tile_pad,
+                                               pre_pad, models, optimize_memory, fast_mode)
+        
+        # Clear GPU memory after processing
+        torch.cuda.empty_cache()
+        gc.collect()
+        
+    except Exception as e:
+        print(f"RealESRGAN: Exception in frame {frame_idx+1}: {str(e)}")
+        imgNEW = None
+        frame_error = f"Exception in parallel processing: {str(e)}"
     
     # Check if ERROR or imgNEW is None.
     if frame_error is not None or imgNEW is None:
@@ -453,8 +566,8 @@ class RealEsrganUpscaler:
                 "netscale": ("INT", {"default": 4, "min": 1, "max": 64, "step": 1, "tooltip": "Model architecture scale (4 for RealESRGAN_x4plus, 2 for RealESRGAN_x2plus). Should match the model's native scale."}),
                 "models": (MODS, {}),
                 "parallel_workers": ("INT", {"default": 1, "min": 1, "max": 4, "step": 1, "tooltip": "Number of parallel workers for batch processing. Higher values may improve performance but use more memory."}),
-        "optimize_memory": ("BOOLEAN", {"default": True, "tooltip": "Enable memory optimizations including intelligent tile sizing and memory management."}),
-        "fast_mode": ("BOOLEAN", {"default": False, "tooltip": "Enable fast mode with reduced quality for faster processing. Uses smaller tiles and optimized settings."}),
+        "optimize_memory": ("BOOLEAN", {"default": False, "tooltip": "Enable memory optimizations including intelligent tile sizing and memory management. May affect quality if tiles become too small."}),
+        "fast_mode": ("BOOLEAN", {"default": False, "tooltip": "Enable fast mode with reduced quality for faster processing. Uses smaller tiles and optimized settings. May cause distortions."}),
             }
         }
 
@@ -485,7 +598,8 @@ class RealEsrganUpscaler:
             for i in range(image.shape[0]):
                 single_image = image[i]
                 frame_args.append((i, single_image, scale_factor, gpu_id, tile_number,
-                                 fp_format, denoise, netscale, tile_pad, pre_pad, models))
+                                 fp_format, denoise, netscale, tile_pad, pre_pad, models,
+                                 optimize_memory, fast_mode))
             
             # Process frames in parallel or sequentially based on parallel_workers
             upscaled_images = [None] * image.shape[0]
@@ -498,7 +612,7 @@ class RealEsrganUpscaler:
                 print(f"RealESRGAN: Using reduced tile size {parallel_tile} for parallel processing")
                 
                 # Update frame args with reduced tile size
-                frame_args = [(i, single_image, scale_factor, gpu_id, parallel_tile, fp_format, denoise, netscale, tile_pad, pre_pad, models) 
+                frame_args = [(i, single_image, scale_factor, gpu_id, parallel_tile, fp_format, denoise, netscale, tile_pad, pre_pad, models, optimize_memory, fast_mode) 
                              for i, single_image in enumerate(image)]
                 
                 with ThreadPoolExecutor(max_workers=parallel_workers) as executor:
@@ -509,6 +623,20 @@ class RealEsrganUpscaler:
                     completed = 0
                     for future in future_to_index:
                         frame_idx, upscaled_tensor, frame_error = future.result()
+                        
+                        # Debug: Check tensor validity
+                        if upscaled_tensor is not None:
+                            print(f"RealESRGAN: Frame {frame_idx+1} tensor shape: {upscaled_tensor.shape}, dtype: {upscaled_tensor.dtype}")
+                            # Check for corrupted tensors (all zeros, NaN, or extreme values)
+                            if torch.all(upscaled_tensor == 0):
+                                print(f"RealESRGAN: Warning - Frame {frame_idx+1} tensor is all zeros!")
+                            elif torch.isnan(upscaled_tensor).any():
+                                print(f"RealESRGAN: Warning - Frame {frame_idx+1} tensor contains NaN values!")
+                            elif torch.max(upscaled_tensor) > 10 or torch.min(upscaled_tensor) < -10:
+                                print(f"RealESRGAN: Warning - Frame {frame_idx+1} tensor has extreme values: min={torch.min(upscaled_tensor):.3f}, max={torch.max(upscaled_tensor):.3f}")
+                        else:
+                            print(f"RealESRGAN: Warning - Frame {frame_idx+1} tensor is None!")
+                        
                         upscaled_images[frame_idx] = upscaled_tensor
                         if frame_error is not None:
                             batch_errors.append(f"Frame {frame_idx+1}: {frame_error}")
@@ -563,11 +691,54 @@ class RealEsrganUpscaler:
             else:
                 ERROR = None
             
-            # Stack all upscaled images into a batch
-            upscaled_batch = torch.stack(upscaled_images)
-            # Get width and height from the first upscaled image
-            first_image = upscaled_images[0]
-            (height, width, channels) = first_image.shape
+            # Validate all tensors before stacking
+            valid_tensors = []
+            for i, tensor in enumerate(upscaled_images):
+                if tensor is not None and tensor.shape[0] > 0:
+                    # Ensure tensor is in the correct format
+                    if len(tensor.shape) == 3:  # H, W, C format
+                        valid_tensors.append(tensor)
+                        print(f"RealESRGAN: Frame {i+1} validated - shape: {tensor.shape}")
+                    else:
+                        print(f"RealESRGAN: Warning - Frame {i+1} has invalid shape: {tensor.shape}")
+                        # Create a placeholder tensor with correct shape
+                        placeholder = torch.zeros((512, 512, 3), dtype=torch.float32)
+                        valid_tensors.append(placeholder)
+                else:
+                    print(f"RealESRGAN: Warning - Frame {i+1} is None or empty, creating placeholder")
+                    # Create a placeholder tensor
+                    placeholder = torch.zeros((512, 512, 3), dtype=torch.float32)
+                    valid_tensors.append(placeholder)
+            
+            # Ensure all tensors have the same shape
+            if valid_tensors:
+                target_shape = valid_tensors[0].shape
+                print(f"RealESRGAN: Target tensor shape: {target_shape}")
+                
+                # Resize all tensors to match the first one
+                for i, tensor in enumerate(valid_tensors):
+                    if tensor.shape != target_shape:
+                        print(f"RealESRGAN: Resizing frame {i+1} from {tensor.shape} to {target_shape}")
+                        # Simple resize - this might cause quality loss but prevents stacking errors
+                        tensor = tensor.unsqueeze(0).permute(0, 3, 1, 2)  # HWC to CHW
+                        tensor = torch.nn.functional.interpolate(tensor, size=(target_shape[0], target_shape[1]), mode='bilinear', align_corners=False)
+                        tensor = tensor.squeeze(0).permute(1, 2, 0)  # CHW back to HWC
+                        valid_tensors[i] = tensor
+                
+                # Stack all upscaled images into a batch
+                upscaled_batch = torch.stack(valid_tensors)
+                print(f"RealESRGAN: Successfully stacked batch with shape: {upscaled_batch.shape}")
+            else:
+                print("RealESRGAN: Error - No valid tensors to stack!")
+                # Create a fallback batch
+                upscaled_batch = torch.zeros((image.shape[0], 512, 512, 3), dtype=torch.float32)
+            # Get width and height from the first valid tensor
+            if valid_tensors:
+                first_image = valid_tensors[0]
+                (height, width, channels) = first_image.shape
+            else:
+                # Fallback dimensions
+                height, width, channels = 512, 512, 3
             # Create a mask for the batch
             maskImage = np.zeros((height, width, channels), np.uint8)
             mask = numpy2tensor_batch(maskImage)

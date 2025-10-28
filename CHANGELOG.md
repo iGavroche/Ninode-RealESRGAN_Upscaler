@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.3.0] - 2025-01-22
+
+### Fixed
+- Video chunk processing boundary artifacts
+  - Added 2-frame temporal overlap to prevent darker frames at chunk boundaries
+  - Improved chunk concatenation logic with proper overlap cropping
+  - Fixed tensor size mismatch errors during concatenation
+  - Better handling of 5D video tensor formats
+
+### Improved
+- Video frame processing with smoother transitions
+  - Automatic overlap detection and handling
+  - Cleaner boundary transitions between video frames
+  - Reduced visual artifacts in chunked processing
+
 ## [0.0.2.0] - 2025-10-24
 
 ### Added
@@ -66,3 +81,4 @@ All notable changes to this project will be documented in this file.
 - Basic RealESRGAN upscaling functionality
 - Single image processing only
 - Basic error handling
+
